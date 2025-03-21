@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek 提示词指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+    <!-- 先加载prompts.js -->
+    <script src="prompts.js"></script>
+    <script>
+        // Initialize categories
+        function initializeCategories() {
+            const container = document.getElementById('categories-container');
+            if (promptsData && typeof promptsData === 'object') {
+                Object.entries(promptsData).forEach(([key, category], index) => {
+                    const categoryElement = document.createElement('div');
+                    categoryElement.className = 'category-card bg-white dark:bg-gray-800 rounded-xl p-6 flex flex-col items-center text-center';
+                    categoryElement.setAttribute('data-aos', 'fade-up');
+                    categoryElement.setAttribute('data-aos-delay', (index * 100).toString());
+                    
+                    categoryElement.innerHTML = `
+                        <div class="category-icon w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${category.icon}" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${category.title}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">${category.description}</p>
+                    `;
+                    
+                    categoryElement.addEventListener('click', () => {
+                        window.location.href = `category.html?type=${key}`;
+                    });
+                    
+                    container.appendChild(categoryElement);
+                });
+            }
+        }
+
+        // Search functionality
+        function initializeSearch() {
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            let searchTimeout;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.toLowerCase().trim();
+
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    const results = [];
+                    Object.entries(promptsData).forEach(([categoryKey, category]) => {
+                        category.prompts.forEach(prompt => {
+                            if (prompt.title.toLowerCase().includes(query) || 
+                                prompt.description.toLowerCase().includes(query)) {
+                                results.push({
+                                    category: category.title,
+                                    categoryKey,
+                                    ...prompt
+                                });
+                            }
+                        });
+                    });
+
+                    displaySearchResults(results);
+                }, 300);
+            });
+        }
+
+        function displaySearchResults(results) {
+            const searchResults = document.getElementById('search-results');
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="text-center py-4 text-gray-600 dark:text-gray-400">
+                        未找到相关提示词
+                    </div>
+                `;
+                searchResults.classList.remove('hidden');
+                return;
+            }
+
+            searchResults.innerHTML = results.map(result => `
+                <div class="search-result-item bg-white dark:bg-gray-800 rounded-lg p-4 mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                     onclick="window.location.href='category.html?type=${result.categoryKey}'">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">${result.title}</h4>
+                        <span class="text-sm text-blue-600 dark:text-blue-400">${result.category}</span>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${result.description}</p>
+                </div>
+            `).join('');
+
+            searchResults.classList.remove('hidden');
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCategories();
+            initializeSearch();
+        });
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    animation: {
+                        'gradient': 'gradient 8s linear infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .prose {
+            max-width: 65ch;
+        }
+        .prose h2 {
+            color: #0ea5e9;
+            font-weight: 700;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            position: relative;
+            display: inline-block;
+        }
+        .prose h2::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5em;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #0ea5e9, transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .prose h2:hover::after {
+            transform: scaleX(1);
+        }
+        .prose p {
+            margin-bottom: 1.5em;
+            line-height: 1.75;
+        }
+        .prose ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .prose li {
+            margin-bottom: 1em;
+            padding: 1em;
+            border-radius: 0.5rem;
+            background: rgba(14, 165, 233, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .prose li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: rgba(14, 165, 233, 0.2);
+        }
+        .prose li strong {
+            color: #0ea5e9;
+            display: block;
+            margin-bottom: 0.5em;
+        }
+        .dark .prose {
+            color: #e5e7eb;
+        }
+        .dark .prose h2 {
+            color: #38bdf8;
+        }
+        .dark .prose li {
+            background: rgba(56, 189, 248, 0.05);
+        }
+        .dark .prose li:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+        }
+        .dark .prose li strong {
+            color: #38bdf8;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #38bdf8, #0ea5e9);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 8s linear infinite;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(56, 189, 248, 0.1));
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 70%);
+            pointer-events: none;
+        }
+        .dark .hero-section {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(14, 165, 233, 0.05));
+        }
+        .dark .hero-section::before {
+            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.05), transparent 70%);
+        }
+        .social-icon {
+            transition: all 0.3s ease;
+        }
+        .social-icon:hover {
+            transform: translateY(-3px);
+            color: #0ea5e9;
+        }
+        .dark .social-icon:hover {
+            color: #38bdf8;
+        }
+        .category-card {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: rgba(14, 165, 233, 0.2);
+        }
+        .dark .category-card:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+        }
+        .category-icon {
+            transition: all 0.3s ease;
+        }
+        .category-card:hover .category-icon {
+            transform: scale(1.1);
+        }
+        /* 提示词使用说明折叠样式 */
+        #usage-guide-header {
+            transition: all 0.3s ease;
+        }
+        #usage-guide-header:hover {
+            color: #0ea5e9;
+        }
+        #usage-guide-content {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md fixed w-full z-50 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold gradient-text">DeepSeek 提示词指南</h1>
+                    <div class="flex items-center space-x-3">
+                        <a href="admin.html" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">管理提示词</a>
+                        <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:scale-110">
+                            <svg class="w-5 h-5 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path class="sun-icon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                <path class="moon-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+            <div class="prose mx-auto">
+                <div class="hero-section" data-aos="fade-up">
+                    <p class="text-lg text-blue-800 dark:text-blue-200 font-medium">
+                        大家好，我是你们的萝卜哥~
+                    </p>
+                    <p class="text-blue-700 dark:text-blue-300">
+                        为大家精心整理了上百个常用DeepSeek提示词，也欢迎大家来共建提示词哦！
+                    </p>
+                    <p class="text-blue-600 dark:text-blue-400">
+                        注意：DeepSeek官方声称与DeepSeek交流是不需要设定身份的，但是经过萝卜哥实测下来，有时候设定身份回答的会更好，这个大家自己在使用过程中慢慢体会吧~
+                    </p>
+                </div>
+
+                <!-- 提示词使用说明 Section -->
+                <div class="usage-guide-section bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm mb-8" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center justify-between cursor-pointer" id="usage-guide-header" onclick="toggleUsageGuide()">
+                        <h2 class="text-xl font-bold gradient-text">提示词使用说明</h2>
+                        <svg id="usage-guide-icon" class="w-5 h-5 text-blue-600 dark:text-blue-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div id="usage-guide-content" class="mt-4 overflow-hidden transition-all duration-300 max-h-0 opacity-0">
+                        <ul class="space-y-2">
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">1</span>
+                                <span>用[]标注可替换内容，如[主题]/[数字]</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">2</span>
+                                <span>明确产出格式要求（字数/图表类型等）</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">3</span>
+                                <span>添加限制条件（如预算/时间/风格）</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">4</span>
+                                <span>多阶段任务拆分成连续对话</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">5</span>
+                                <span>对不满意的结果进行细节修正</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">6</span>
+                                <span>结合具体场景说明背景信息</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">7</span>
+                                <span>请求分步骤思考和展示过程</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">8</span>
+                                <span>要求提供可验证的信息来源</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">9</span>
+                                <span>指定知识截止时间范围</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-medium mr-2 flex-shrink-0">10</span>
+                                <span>必要时要求角色扮演（如模拟专家）</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div class="search-section mb-8" data-aos="fade-up">
+                    <div class="relative">
+                        <input type="text"
+                               id="search-input"
+                               class="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-300"
+                               placeholder="搜索提示词..."
+                               autocomplete="off">
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div id="search-results" class="mt-4 hidden">
+                        <!-- Search results will be displayed here -->
+                    </div>
+                </div>
+
+                <h2 class="text-center mb-8 gradient-text" data-aos="fade-up">提示词分类导航</h2>
+
+                <div id="categories-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 gradient-text">作者信息</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">作者：萝卜 哥</p>
+                    <div class="flex justify-center space-x-6">
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">GitHub</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.91-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">Twitter</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">LinkedIn</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-.88-.06-1.601-1-1.601-1 0-1.16.781-1.16 1.601v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                        © 2024 萝卜哥. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+
+        // Check for saved theme preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            document.documentElement.classList.remove('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+        
+        // 提示词使用说明折叠功能
+        function toggleUsageGuide() {
+            const content = document.getElementById('usage-guide-content');
+            const icon = document.getElementById('usage-guide-icon');
+            
+            if (content.classList.contains('max-h-0')) {
+                // 展开内容
+                content.classList.remove('max-h-0', 'opacity-0');
+                content.classList.add('max-h-[500px]', 'opacity-100');
+                icon.classList.add('rotate-180');
+            } else {
+                // 折叠内容
+                content.classList.remove('max-h-[500px]', 'opacity-100');
+                content.classList.add('max-h-0', 'opacity-0');
+                icon.classList.remove('rotate-180');
+            }
+        }
+        
+        // 页面加载完成后检查是否需要自动展开提示词使用说明
+        document.addEventListener('DOMContentLoaded', () => {
+            // 默认折叠状态，如果需要默认展开，可以在这里调用toggleUsageGuide()
+        });
+    </script>
+</body>
+</html>

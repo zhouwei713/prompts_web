@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek 提示词分类</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+    <script src="prompts.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #38bdf8, #0ea5e9);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 8s linear infinite;
+        }
+        .prompt-card {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .prompt-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: rgba(14, 165, 233, 0.2);
+        }
+        .dark .prompt-card:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+        }
+        .back-button {
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateX(-4px);
+        }
+        .copy-button {
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        .prompt-card:hover .copy-button {
+            opacity: 1;
+        }
+        .copy-button:hover {
+            transform: scale(1.1);
+        }
+        .copy-success {
+            background-color: #10B981;
+            color: white;
+        }
+        @keyframes copySuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .share-button {
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .prompt-card:hover .share-button {
+            opacity: 1;
+        }
+        .share-button:hover {
+            transform: scale(1.1);
+        }
+        .share-success {
+            background-color: #3B82F6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md fixed w-full z-50 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <a href="index.html" class="back-button text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </a>
+                        <h1 class="text-2xl font-bold gradient-text" id="category-title">加载中...</h1>
+                    </div>
+                    <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:scale-110">
+                        <svg class="w-5 h-5 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path class="sun-icon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            <path class="moon-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+            <div id="prompts-container" class="space-y-6">
+                <!-- Prompts will be loaded here -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 gradient-text">作者信息</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">作者：萝卜哥</p>
+                    <div class="flex justify-center space-x-6">
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">GitHub</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.91-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">Twitter</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <span class="sr-only">LinkedIn</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-.88-.06-1.601-1-1.601-1 0-1.16.781-1.16 1.601v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                        © 2024 萝卜哥. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Load category content
+        function loadCategory() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryType = urlParams.get('type');
+            const category = promptsData[categoryType];
+
+            if (category) {
+                document.getElementById('category-title').textContent = category.title;
+                const container = document.getElementById('prompts-container');
+                container.innerHTML = ''; // 清空容器
+                
+                category.prompts.forEach((prompt, index) => {
+                    const promptElement = document.createElement('div');
+                    promptElement.className = 'prompt-card bg-white dark:bg-gray-800 rounded-xl p-6 relative';
+                    promptElement.setAttribute('data-aos', 'fade-up');
+                    promptElement.setAttribute('data-aos-delay', (index * 100).toString());
+                    
+                    promptElement.innerHTML = `
+                        <div class="flex items-start justify-between">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">${prompt.title}</h3>
+                            <div class="flex gap-2">
+                                <button class="copy-button p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="复制提示词">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                    </svg>
+                                </button>
+                                <button class="share-button p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="分享提示词">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400">${prompt.description}</p>
+                    `;
+                    
+                    // 添加复制功能
+                    const copyButton = promptElement.querySelector('.copy-button');
+                    copyButton.addEventListener('click', async () => {
+                        const title = promptElement.querySelector('h3').textContent;
+                        const description = promptElement.querySelector('p').textContent;
+                        const textToCopy = `${title}\n\n${description}`;
+                        
+                        try {
+                            await navigator.clipboard.writeText(textToCopy);
+                            copyButton.classList.add('copy-success');
+                            copyButton.innerHTML = `
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            `;
+                            
+                            setTimeout(() => {
+                                copyButton.classList.remove('copy-success');
+                                copyButton.innerHTML = `
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                    </svg>
+                                `;
+                            }, 2000);
+                        } catch (err) {
+                            console.error('复制失败:', err);
+                        }
+                    });
+                    
+                    // 添加分享功能
+                    const shareButton = promptElement.querySelector('.share-button');
+                    shareButton.addEventListener('click', async () => {
+                        const title = promptElement.querySelector('h3').textContent;
+                        const description = promptElement.querySelector('p').textContent;
+                        const text = `标题：${title}\n描述：${description}`;
+
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: title,
+                                    text: description,
+                                    url: window.location.href
+                                });
+                            } catch (err) {
+                                console.error('分享失败:', err);
+                            }
+                        } else {
+                            // 如果不支持原生分享，则复制到剪贴板
+                            try {
+                                await navigator.clipboard.writeText(text);
+                                shareButton.classList.add('share-success');
+                                shareButton.innerHTML = `
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                `;
+                                setTimeout(() => {
+                                    shareButton.classList.remove('share-success');
+                                    shareButton.innerHTML = `
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                                        </svg>
+                                    `;
+                                }, 2000);
+                            } catch (err) {
+                                console.error('复制失败:', err);
+                            }
+                        }
+                    });
+                    
+                    container.appendChild(promptElement);
+                });
+            } else {
+                document.getElementById('category-title').textContent = '分类不存在';
+                document.getElementById('prompts-container').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-gray-600 dark:text-gray-400">该分类不存在或已被移除</p>
+                        <a href="index.html" class="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:underline">返回首页</a>
+                    </div>
+                `;
+            }
+        }
+
+        // 在文档加载完成后初始化
+        document.addEventListener('DOMContentLoaded', loadCategory);
+    </script>
+    <script>
+        // Initialize AOS
+        document.addEventListener('DOMContentLoaded', () => {
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 100
+            });
+        });
+
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = themeToggle.querySelector('.sun-icon');
+            const moonIcon = themeToggle.querySelector('.moon-icon');
+
+            // Check for saved theme preference
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
