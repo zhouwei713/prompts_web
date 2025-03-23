@@ -297,7 +297,28 @@
                 <div class="flex justify-between items-center">
                     <h1 class="text-2xl font-bold gradient-text">DeepSeek 提示词指南</h1>
                     <div class="flex items-center space-x-3">
-                        <a href="admin.html" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">管理提示词</a>
+                        <button id="admin-btn" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">管理提示词</button>
+                        <!-- 密码验证模态框 -->
+                        <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] hidden">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg max-w-md w-full m-auto">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">管理员验证</h3>
+                                    <button id="close-modal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="text-gray-600 dark:text-gray-400 mb-4">请输入管理员密码以继续</p>
+                                <div class="mb-4">
+                                    <input type="password" id="admin-password" class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500" placeholder="请输入密码">
+                                    <p id="password-error" class="text-red-500 text-sm mt-1 hidden">密码错误，请重试</p>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button id="verify-password" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">验证</button>
+                                </div>
+                            </div>
+                        </div>
                         <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:scale-110">
                             <svg class="w-5 h-5 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path class="sun-icon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -475,6 +496,62 @@
                 localStorage.theme = 'dark';
                 sunIcon.classList.remove('hidden');
                 moonIcon.classList.add('hidden');
+            }
+        });
+        
+        // 管理提示词按钮点击事件
+        const adminBtn = document.getElementById('admin-btn');
+        const passwordModal = document.getElementById('password-modal');
+        const closeModal = document.getElementById('close-modal');
+        const verifyPassword = document.getElementById('verify-password');
+        const adminPassword = document.getElementById('admin-password');
+        const passwordError = document.getElementById('password-error');
+        
+        // 设置管理员密码
+        const correctPassword = "admin123"; // 可以修改为您想要的密码
+        
+        if (adminBtn) {
+            adminBtn.addEventListener('click', () => {
+                // 显示密码验证模态框
+                passwordModal.classList.remove('hidden');
+                adminPassword.value = ''; // 清空密码输入框
+                passwordError.classList.add('hidden'); // 隐藏错误信息
+                adminPassword.focus(); // 聚焦到密码输入框
+            });
+        }
+        
+        // 关闭模态框
+        if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                passwordModal.classList.add('hidden');
+            });
+        }
+        
+        // 点击模态框外部关闭
+        passwordModal.addEventListener('click', (e) => {
+            if (e.target === passwordModal) {
+                passwordModal.classList.add('hidden');
+            }
+        });
+        
+        // 验证密码
+        if (verifyPassword) {
+            verifyPassword.addEventListener('click', () => {
+                if (adminPassword.value === correctPassword) {
+                    // 密码正确，跳转到管理页面
+                    window.location.href = 'admin.html';
+                } else {
+                    // 密码错误，显示错误信息
+                    passwordError.classList.remove('hidden');
+                    adminPassword.focus();
+                }
+            });
+        }
+        
+        // 按回车键验证密码
+        adminPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyPassword.click();
             }
         });
         
